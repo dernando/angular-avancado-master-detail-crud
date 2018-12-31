@@ -18,7 +18,7 @@ export class Entry {
         revenue: 'Receita'
     }
 
-    get PaidText(): string {
+    get paidText(): string {
         return this.paid ? 'Pago' : 'Pendente';
     }
 }
