@@ -1,73 +1,15 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from "@angular/common/http";
-
-import { Observable, throwError } from 'rxjs';
-import { map, catchError, flatMap } from 'rxjs/operators';
+import { Injectable, Injector } from '@angular/core';
 
 import { Category } from './category.model';
+import { BaseResourceService } from 'src/app/shared/services/base-resource.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class CategoryService {
+export class CategoryService extends BaseResourceService<Category>{
 
-  private apiPath: string = "api/categories";
-
-  constructor(private http: HttpClient) { }
-
-  getAll(): Observable<Category[]> {
-    return this.http.get(this.apiPath).pipe(
-      catchError(this.handleError),
-      map(this.jsonDatatoCategories)
-    )
-  }
-
-  getById(id: number): Observable<Category> {
-    const url = `${this.apiPath}/${id}`;
-
-    return this.http.get(url).pipe(
-      catchError(this.handleError),
-      map(this.jsonDatatoCategory)  
-    )
-  }
-
-  create(category: Category): Observable<Category> {
-    return this.http.post(this.apiPath, category).pipe(
-      catchError(this.handleError),
-      map(this.jsonDatatoCategory)
-    )
-  }
-
-  update(category: Category): Observable<Category> {
-    const url = `${this.apiPath}/${category.id}`;
-
-    return this.http.put(url, category).pipe(
-      catchError(this.handleError),
-      map(() => category)
-    )
-  }
-
-  delete(id: number): Observable<any> {
-    const url = `${this.apiPath}/${id}`;
-
-    return this.http.delete(url).pipe(
-      catchError(this.handleError),
-      map(() => null)  
-    )
-  }
-
-  private jsonDatatoCategories(jsonData: any[]): Category[] {
-    const categories: Category[] = [];
-    jsonData.forEach(element => categories.push(element as Category));
-    return categories;
-  }
-
-  private jsonDatatoCategory(jsonData: any): Category {
-    return jsonData as Category;
+  constructor(protected injector: Injector) { 
+    super("api/categories", injector)
   }
   
-  private handleError(error: any): Observable<any> {
-    console.log("Erro na requisição => ", error);
-    throw new Error('Method not implemented.');
-  }
 }
