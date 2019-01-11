@@ -12,15 +12,16 @@ export class BaseResourceService<T extends BaseResourceModel> {
 
     constructor(
         protected apiPath: string,
-        protected injector: Injector
+        protected injector: Injector,
+        protected jsonDataToResourceFn: (jsonData: any) => T
     ){
       this.http = injector.get(HttpClient);
     }
 
     getAll(): Observable<T[]> {
         return this.http.get(this.apiPath).pipe(
-          catchError(this.handleError),
-          map(this.jsonDatatoResources)
+          map((jsonData : Array<any>) => this.jsonDatatoResources(jsonData)),
+          catchError(this.handleError)
         )
       }
     
@@ -28,24 +29,24 @@ export class BaseResourceService<T extends BaseResourceModel> {
         const url = `${this.apiPath}/${id}`;
     
         return this.http.get(url).pipe(
-          catchError(this.handleError),
-          map(this.jsonDatatoResource)  
+          map(this.jsonDatatoResource.bind(this)),
+          catchError(this.handleError)            
         )
       }
     
       create(resource: T): Observable<T> {
-        return this.http.post(this.apiPath, resource).pipe(
-          catchError(this.handleError),
-          map(this.jsonDatatoResource)
+        return this.http.post(this.apiPath, resource).pipe(          
+          map(this.jsonDatatoResource.bind(this)),
+          catchError(this.handleError)
         )
       }
     
       update(resource: T): Observable<T> {
         const url = `${this.apiPath}/${resource.id}`;
     
-        return this.http.put(url, resource).pipe(
+        return this.http.put(url, resource).pipe(          
+          map(() => resource),
           catchError(this.handleError),
-          map(() => resource)
         )
       }
     
@@ -60,12 +61,14 @@ export class BaseResourceService<T extends BaseResourceModel> {
 
       protected jsonDatatoResources(jsonData: any[]): T[] {
         const resources: T[] = [];
-        jsonData.forEach(element => resources.push(element as T));
+        jsonData.forEach(
+          element => resources.push( this.jsonDataToResourceFn(element))
+        );
         return resources;
       }
     
       protected jsonDatatoResource(jsonData: any): T {
-        return jsonData as T;
+        return this.jsonDataToResourceFn(jsonData);
       }
       
       protected handleError(error: any): Observable<any> {
